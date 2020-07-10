@@ -1,14 +1,17 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace ProducerConsumer
 {
-    class OrderTask
+    class OrderTask : IComparable<OrderTask>
     {
         Random rand = new Random();
         public Store store;
-        public int offerAmount;
-        public bool success;
+        public int AmountAvailable;
+        public int AmountAttempted;
+        public decimal Quote;
+        public bool Success;
 
         public OrderTask(Store @out)
         {
@@ -24,19 +27,39 @@ namespace ProducerConsumer
         {
             Log( "Getting offer" );
             await Task.Delay( rand.Next( 3000 ) );
-            offerAmount = rand.Next( 1, 5 ) * 100;
-            Log( "Offer received" );
+            Quote = rand.Next( 1, 5 );
+            AmountAvailable = rand.Next( 1, 7 ) * 100;
+            Log( $"Offer received.\t{Quote}\t{AmountAvailable}" );
         }
 
-        public async Task<bool> PlaceOrder()
+        public async Task<bool> PlaceOrder(int amount)
         {
-            Log( $"Placing order for {offerAmount}" );
+            AmountAttempted = amount;
+            Log( $"Placing order for {AmountAttempted} @ {Quote}" );
             await Task.Delay( rand.Next( 3000 ) );
             Log( "Wager placed" );
             if (rand.Next( 100 ) >= 50)
-                return success = true;
+                return Success = true;
             else
-                return success = false;
+                return Success = false;
+        }
+
+        public override string ToString()
+        {
+            return store.Name;
+        }
+
+        public int CompareTo([AllowNull] OrderTask other)
+        {
+            if (other is null)
+                return 1;
+
+            if (other.Quote > this.Quote)
+                return 1;
+            else if (other.Quote.Equals( this.Quote ))
+                return 0;
+            else
+                return -1;
         }
     }
 }

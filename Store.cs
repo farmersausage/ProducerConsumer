@@ -12,5 +12,10 @@ namespace ProducerConsumer
         }
 
         public OrderTask NewOrderTask() => new OrderTask( this );
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }
