@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ProducerConsumer
 {
     class OrderedThreadSafeList<T>
     {
-        //object obj = new object();
+        //TODO:: convert this all to a linked list 
+        //add it in sorted way, and then just pop the top node off on getnext
         List<T> itemList = new List<T>();
 
         public bool Add(T item)
@@ -29,12 +31,15 @@ namespace ProducerConsumer
                 if (itemList.Count == 0)
                     return false;
 
-                itemList.Sort();
-                item = itemList[0];
-                itemList.Remove( item );
+                //itemList.Sort();
+                //item = itemList[0];
+                var maxItem = itemList.Max();
+                itemList.Remove( maxItem );
                 //Console.WriteLine( $"Getting next item: {item}" );
                 return true;
             }
         }
+
+
     }
 }
