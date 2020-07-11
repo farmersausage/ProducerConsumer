@@ -93,7 +93,7 @@ namespace ProducerConsumer
 
         bool TryPlace(OrderTask orderTask, out Task placeTask)
         {
-            Console.WriteLine( $"Trying to place {orderTask}" );
+            //Console.WriteLine( $"Trying to place {orderTask}" );
             placeTask = null;
             if (!TryAllocateAmount( orderTask, out var amount ))
                 return false;
@@ -141,6 +141,7 @@ namespace ProducerConsumer
                 var amountAvailable = AmountRequested - (AmountQueued + AmountAccumulated);
                 orderAmount = amountAvailable > orderTask.AmountAvailable ? orderTask.AmountAvailable : amountAvailable;
                 AmountQueued += orderAmount; //reserve amount
+                Console.WriteLine( $"ALLOCATION: {orderTask}\t      \tAccumulated:{AmountAccumulated}\tQueued:{AmountQueued}" );
             }
 
             return true;
@@ -157,7 +158,7 @@ namespace ProducerConsumer
                 if (orderTask.Success)
                     AmountAccumulated += orderTask.AmountAttempted;
 
-                Console.WriteLine( $"Order finished: {orderTask}\t{ (orderTask.Success ? "SUCCESS" : "FAILED") }\tAccumulated:{AmountAccumulated}\tQueued:{AmountQueued}" );
+                Console.WriteLine( $"DEALLOCATION: {orderTask}\t{ (orderTask.Success ? "SUCCESS" : "FAILED") }\tAccumulated:{AmountAccumulated}\tQueued:{AmountQueued}" );
             }
         }
     }
