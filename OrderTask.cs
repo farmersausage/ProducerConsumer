@@ -24,15 +24,15 @@ namespace ProducerConsumer
 
         void Log(string msg)
         {
-            Console.WriteLine( $"{store.Name}: {msg}" );
+            Console.WriteLine( $"{store.Name}:\t{msg}" );
         }
 
-        public async Task GetOffer(CancellationToken token)
+        public async Task GetOffer()
         {
             Log( "Getting offer" );
-            await Task.Delay( rand.Next( 3000 ) );
-            Quote = rand.Next( 1, 5 );
-            AmountAvailable = rand.Next( 1, 7 ) * 100;
+            await Task.Delay( rand.Next( 5000 ) );
+            Quote = rand.Next( 1, 10 );
+            AmountAvailable = rand.Next( 1, 5 ) * 100;
             Log( $"Offer received.\t{Quote}\t{AmountAvailable}" );
         }
 
@@ -40,9 +40,9 @@ namespace ProducerConsumer
         {
             AmountAttempted = amount;
             Log( $"Placing order for {AmountAttempted} @ {Quote}" );
-            await Task.Delay( rand.Next( 3000 ) );
+            await Task.Delay( rand.Next( 2500, 5000 ) );
             Log( "Wager placed" );
-            if (rand.Next( 100 ) >= 50)
+            if (rand.Next( 100 ) >= 25)
                 return Success = true;
             else
                 return Success = false;

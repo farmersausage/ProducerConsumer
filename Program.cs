@@ -22,8 +22,8 @@ namespace ProducerConsumer
         
         static async Task Main(string[] args)
         {
-            List<Store> stores = Enumerable.Range( 0, 10 ).Select( i => new Store( i.ToString() ) ).ToList();
-            var order = new Order(stores, 800);
+            List<Store> stores = Enumerable.Range( 0, 15 ).Select( i => new Store( i.ToString() ) ).ToList();
+            var order = new Order(stores, 1100);
 
             await order.Start();
 

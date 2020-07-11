@@ -19,12 +19,10 @@ namespace ProducerConsumer
             }
         }
 
-        public bool Complete { get; set; }
-
         public void Add(T item)
         {
-            if (Complete)
-                throw new InvalidOperationException("Marked as complete");
+            //if (Complete)
+            //    throw new InvalidOperationException("Marked as complete");
 
             lock (itemList)
             {

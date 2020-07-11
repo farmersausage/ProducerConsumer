@@ -17,6 +17,7 @@ namespace ProducerConsumer
         readonly OrderedThreadSafeList<OrderTask> quotedOrderTasks = new OrderedThreadSafeList<OrderTask>();
         readonly object contextLock = new object();
 
+        bool quotingComplete = false;
         public int AmountRequested { get; }
         public int AmountAccumulated { get; private set; }
         public int AmountQueued { get; private set; }
@@ -30,7 +31,8 @@ namespace ProducerConsumer
         public async Task Start()
         {
             LaunchQuoteTasks();
-            await LaunchPlacementWorker( );
+            await Task.Delay( PLACEMENT_DELAY );
+            await PlacementWorker( );
         }
 
         public async Task Stop()
@@ -40,6 +42,7 @@ namespace ProducerConsumer
             cts.Cancel();
         }
 
+        #region QUOTES
         async Task LaunchQuoteTasks()
         {
             var quoteTasks = stores
@@ -48,7 +51,7 @@ namespace ProducerConsumer
                 .ToList();
 
             await Task.WhenAll( quoteTasks );
-            quotedOrderTasks.Complete = true;
+            quotingComplete = true;
         }
 
         async Task LaunchQuoteTask( OrderTask orderTask)
@@ -56,73 +59,91 @@ namespace ProducerConsumer
             await orderTask.GetOffer();
             quotedOrderTasks.Add( orderTask );
         }
-
-        async Task LaunchPlacementWorker()
-        {
-            await Task.Delay(PLACEMENT_DELAY);
-            await PlacementWorker();
-        }
+        #endregion
 
         async Task PlacementWorker()
         {
+            Console.WriteLine( "Starting Placement Worker" );
             var placeTasks = new List<Task>();
-            while (!quotedOrderTasks.Complete || quotedOrderTasks.Count > 0)
+            while( !quotingComplete || quotedOrderTasks.Count > 0 )
             {
-                if (quotedOrderTasks.TryGetNext( out var nextOrderTask ) == false)
-                    continue;   //waiting on quotes to come in
-
-                //we dont need a lock here since amountrequested is const
-                if (AmountAccumulated > AmountRequested)
+                //check if there is a quote available
+                //if there is none available then we wait
+                //TODO:: research if there is a more efficient way to continue/wait
+                if (!quotedOrderTasks.TryGetNext( out var nextOrderTask ))
                 {
-                    //we're done placing orders
-                    //might make more sense to more to allocateamount
+                    await Task.Delay( 25 );
                     continue;
                 }
 
-                var orderAmount = AllocateAmount( nextOrderTask );
-                Console.WriteLine( $"Placing order: {nextOrderTask}\t\tAccumulated:{AmountAccumulated}\tQueued:{AmountQueued}" );
-                var placeOrderTask = PlaceOrderTask( nextOrderTask, orderAmount );
-                placeTasks.Add( placeOrderTask );
+                //try to place the order. 
+                //if this fails then we put the order back in to quotedOrderTasks
+                if (!TryPlace( nextOrderTask, out var placeTask ))
+                {
+                    quotedOrderTasks.Add( nextOrderTask );
+                    await Task.Delay( 25 );
+                    continue;
+                }
+
+                placeTasks.Add( placeTask );
             }
 
             await Task.WhenAll( placeTasks );
         }
 
-        async Task PlaceOrderTask(OrderTask orderTask, int amount)
+        bool TryPlace(OrderTask orderTask, out Task placeTask)
         {
-            if (amount != 0)
-                await orderTask.Place( amount );
+            Console.WriteLine( $"Trying to place {orderTask}" );
+            placeTask = null;
+            if (!TryAllocateAmount( orderTask, out var amount ))
+                return false;
 
-            //need to call this to pulse.
-            DeallocateAmount( orderTask );
+            //save the task instantiation cost 
+            //ma
+            if (amount == 0)
+            {
+                placeTask = Task.CompletedTask;
+                return true;
+            }
+
+            //need Task.Run to circumvent out parameter in async method restriction
+            placeTask = Task.Run(
+                async () =>
+                {
+                    await orderTask.Place( amount );
+                    DeallocateAmount( orderTask );
+                }
+            );
+            return true;
         }
 
-        int AllocateAmount(OrderTask orderTask)
+        bool TryAllocateAmount(OrderTask orderTask, out int orderAmount)
         {
             if (orderTask == null)
                 throw new ArgumentNullException( nameof( orderTask ) );
 
-            int orderAmount;
+            orderAmount = 0;
             lock (contextLock)
             {
-                while ((AmountAccumulated + AmountQueued) >= AmountRequested)
+                if (AmountAccumulated >= AmountRequested)
                 {
-                    //Is the order done?
-                    if (AmountAccumulated >= AmountRequested)
-                        return 0; 
+                    //we are done, treat it as a successful allocation of 0.
+                    return true;
+                }
 
-                    //We need to wait for the queue to free up
-                    Monitor.Wait( contextLock );
+                if ((AmountAccumulated + AmountQueued) >= AmountRequested)
+                {
+                    //we need to wait.
+                    return false;
                 }
 
                 // calculate total residual available.
                 var amountAvailable = AmountRequested - (AmountQueued + AmountAccumulated);
                 orderAmount = amountAvailable > orderTask.AmountAvailable ? orderTask.AmountAvailable : amountAvailable;
-
                 AmountQueued += orderAmount; //reserve amount
             }
 
-            return orderAmount;
+            return true;
         }
 
         void DeallocateAmount(OrderTask orderTask)
@@ -137,7 +158,6 @@ namespace ProducerConsumer
                     AmountAccumulated += orderTask.AmountAttempted;
 
                 Console.WriteLine( $"Order finished: {orderTask}\t{ (orderTask.Success ? "SUCCESS" : "FAILED") }\tAccumulated:{AmountAccumulated}\tQueued:{AmountQueued}" );
-                Monitor.Pulse( contextLock );
             }
         }
     }
