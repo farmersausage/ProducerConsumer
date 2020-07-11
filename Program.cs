@@ -23,10 +23,11 @@ namespace ProducerConsumer
         static async Task Main(string[] args)
         {
             List<Store> stores = Enumerable.Range( 0, 10 ).Select( i => new Store( i.ToString() ) ).ToList();
-            var order = new Order(stores, 1100);
+            var order = new Order(stores, 800);
 
             await order.Start();
 
+            Console.WriteLine( "Done" );
             Console.ReadKey();
         }
     }

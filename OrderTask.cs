@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ProducerConsumer
@@ -8,10 +9,13 @@ namespace ProducerConsumer
     {
         Random rand = new Random();
         public Store store;
+        public SemaphoreSlim TaskSemaphore = new SemaphoreSlim(1, 1);
+
         public int AmountAvailable;
         public int AmountAttempted;
         public decimal Quote;
         public bool Success;
+        internal int AmountAllocated;
 
         public OrderTask(Store @out)
         {
@@ -23,7 +27,7 @@ namespace ProducerConsumer
             Console.WriteLine( $"{store.Name}: {msg}" );
         }
 
-        public async Task GetOffer()
+        public async Task GetOffer(CancellationToken token)
         {
             Log( "Getting offer" );
             await Task.Delay( rand.Next( 3000 ) );
@@ -32,7 +36,7 @@ namespace ProducerConsumer
             Log( $"Offer received.\t{Quote}\t{AmountAvailable}" );
         }
 
-        public async Task<bool> PlaceOrder(int amount)
+        public async Task<bool> Place(int amount)
         {
             AmountAttempted = amount;
             Log( $"Placing order for {AmountAttempted} @ {Quote}" );
@@ -54,12 +58,12 @@ namespace ProducerConsumer
             if (other is null)
                 return 1;
 
-            if (other.Quote > this.Quote)
-                return 1;
+            if (this.Quote > other.Quote )
+                return -1;
             else if (other.Quote.Equals( this.Quote ))
                 return 0;
             else
-                return -1;
+                return 1;
         }
     }
 }

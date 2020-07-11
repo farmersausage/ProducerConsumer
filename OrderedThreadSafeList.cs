@@ -4,22 +4,52 @@ using System.Linq;
 
 namespace ProducerConsumer
 {
-    class OrderedThreadSafeList<T>
+    class OrderedThreadSafeList<T> where T : IComparable<T>
     {
-        //TODO:: convert this all to a linked list 
-        //add it in sorted way, and then just pop the top node off on getnext
-        List<T> itemList = new List<T>();
+        LinkedList<T> itemList = new LinkedList<T>();
+        LinkedListNode<T> headNode = null;
 
-        public bool Add(T item)
+        public int Count
         {
-            lock (itemList)
-                itemList.Add( item );
-
-            //Console.WriteLine( $"Adding: {item}" );
-            return true;
+            get
+            {
+                //do we need a lock here???
+                lock (itemList)
+                    return itemList.Count;
+            }
         }
 
-        public bool GetNext(out T item)
+        public bool Complete { get; set; }
+
+        public void Add(T item)
+        {
+            if (Complete)
+                throw new InvalidOperationException("Marked as complete");
+
+            lock (itemList)
+            {
+                var newNode = new LinkedListNode<T>( item );
+                LinkedListNode<T> curr = itemList.First;
+                LinkedListNode<T> previous = null;
+
+                while ( curr != null && curr.Value.CompareTo(item) == -1 )
+                {
+                    previous = curr;
+                    curr = curr.Next;
+                }
+
+                if (previous == null)
+                {
+                    itemList.AddFirst( newNode );
+                }
+                else
+                {
+                    itemList.AddAfter( previous, newNode );
+                }
+            }
+        }
+
+        public bool TryGetNext(out T item)
         {
             item = default( T );
 
@@ -31,11 +61,8 @@ namespace ProducerConsumer
                 if (itemList.Count == 0)
                     return false;
 
-                //itemList.Sort();
-                //item = itemList[0];
-                var maxItem = itemList.Max();
-                itemList.Remove( maxItem );
-                //Console.WriteLine( $"Getting next item: {item}" );
+                item = itemList.First.Value;
+                itemList.RemoveFirst();
                 return true;
             }
         }
