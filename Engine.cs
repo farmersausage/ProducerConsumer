@@ -30,7 +30,12 @@ namespace ProducerConsumer
             var processOrdersTask = _orderHandler.PlaceOrders(() => !getQuotesTask.IsCompletedSuccessfully);
 
             await getQuotesTask;
-            await processOrdersTask;
+            var results = await processOrdersTask;
+            Console.WriteLine($"Successfully placed the following orders...");
+            foreach(var order in results)
+            {
+                Console.WriteLine($"StoreID: {order.StoreId} Price: {order.Price} Quantity: {order.Quantity}");
+            }
         }
     }
 }

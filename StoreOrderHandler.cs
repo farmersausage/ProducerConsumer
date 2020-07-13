@@ -66,7 +66,7 @@ namespace ProducerConsumer
                 else
                 {
                     Console.WriteLine($"Quantity Required: {_quantityRequired} Quantity Received: {_quantityReceived} Quantity Inflight: {_quantityInFlight}");
-                    Console.WriteLine($"Waiting for at least one inflight request to finish to see if we should place another order");
+                    Console.WriteLine($"Waiting for at least one inflight request to finish to see if we should place another order. {inFlightOrders.Count} orders currently in process.");
                     await Task.WhenAny(inFlightOrders);
                     inFlightOrders.RemoveAll(x => x.IsCompleted);
                 }
