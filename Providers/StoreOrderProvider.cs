@@ -12,15 +12,8 @@ namespace ProducerConsumer.Providers
         {
             //Artifically delay the task simulating placing the order
             await Task.Delay(_rand.Next(2500, 5000));
-            if (_rand.Next(100) >= 25)
-                completeOrderCallback.Invoke( new StoreOrder(
-                    true,
-                    quote.StoreId,
-                    quote.Price,
-                    quote.Quantity));
-            else
-                completeOrderCallback.Invoke(new StoreOrder(
-                    false,
+            completeOrderCallback.Invoke(new StoreOrder(
+                    _rand.Next(100) >= 25,
                     quote.StoreId,
                     quote.Price,
                     quote.Quantity));

@@ -8,7 +8,7 @@ namespace ProducerConsumer.Providers
     {
         private static Random _rand = new Random();
 
-        public static async Task<StoreQuote> GetOfferByStore(StoreV2 store)
+        public static async Task<StoreQuote> GetQuoteByStore(StoreV2 store)
         {
             //Our artifical delay "getting" the quote
             await Task.Delay(_rand.Next(5000));

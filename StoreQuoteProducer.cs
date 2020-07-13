@@ -33,7 +33,7 @@ namespace ProducerConsumer
         {
             var transformStore = new TransformBlock<StoreV2, StoreQuote>(async s =>
             {
-                var quote = await StoreQuoteProvider.GetOfferByStore(s);
+                var quote = await StoreQuoteProvider.GetQuoteByStore(s);
                 return quote;
             },
             new ExecutionDataflowBlockOptions { EnsureOrdered = false, MaxDegreeOfParallelism = 10, CancellationToken = cancellationToken });
