@@ -5,10 +5,4 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Order.cs" />
-    <Compile Remove="OrderTask.cs" />
-    <Compile Remove="Store.cs" />
-  </ItemGroup>
-
 </Project>
