@@ -6,6 +6,7 @@ namespace ProducerConsumer
     public class OrderedThreadSafeList<T> where T : IComparable<T>
     {
         LinkedList<T> itemList = new LinkedList<T>();
+        LinkedListNode<T> headNode = null;
 
         public int Count
         {
@@ -24,11 +25,11 @@ namespace ProducerConsumer
 
             lock (itemList)
             {
-                var newNode = new LinkedListNode<T>(item);
+                var newNode = new LinkedListNode<T>( item );
                 LinkedListNode<T> curr = itemList.First;
                 LinkedListNode<T> previous = null;
 
-                while (curr != null && curr.Value.CompareTo(item) == -1)
+                while ( curr != null && curr.Value.CompareTo(item) == -1 )
                 {
                     previous = curr;
                     curr = curr.Next;
@@ -36,11 +37,11 @@ namespace ProducerConsumer
 
                 if (previous == null)
                 {
-                    itemList.AddFirst(newNode);
+                    itemList.AddFirst( newNode );
                 }
                 else
                 {
-                    itemList.AddAfter(previous, newNode);
+                    itemList.AddAfter( previous, newNode );
                 }
             }
         }
